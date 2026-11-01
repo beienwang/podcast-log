@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>播客收听档案 · 我听过的播客记录与总结</title>
+<meta name="description" content="个人的播客收听档案：记录每一期的收听时间、评分、主播笔记与收获，并自动总结你的频道偏好与常听主题。">
+<meta name="theme-color" content="#0a0b0e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230a0b0e'/%3E%3Cg fill='%23f6b64a'%3E%3Crect x='14' y='26' width='5' height='12' rx='2.5'/%3E%3Crect x='23' y='19' width='5' height='26' rx='2.5'/%3E%3Crect x='32' y='13' width='5' height='38' rx='2.5'/%3E%3Crect x='41' y='21' width='5' height='22' rx='2.5'/%3E%3Crect x='50' y='28' width='5' height='8' rx='2.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/styles.css">
+<script>
+  /* 先于渲染应用主题，避免深浅色闪一下 */
+  try {
+    if (localStorage.getItem('podcast-log.theme') === 'light') {
+      document.documentElement.dataset.theme = 'light';
+    }
+  } catch (e) { /* 无痕模式忽略 */ }
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#log">跳到收听记录</a>
+
+<div class="page">
+
+  <!-- ═══════════ 顶栏 ═══════════ -->
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="回到顶部">
+      <span class="brand__mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </span>
+      <span class="brand__text">
+        播客收听档案
+        <em>Podcast&nbsp;Log</em>
+      </span>
+    </a>
+
+    <nav class="topnav" aria-label="页面导航">
+      <a href="#channels">频道偏好</a>
+      <a href="#topics">主题</a>
+      <a href="#log">记录</a>
+    </nav>
+
+    <div class="topbar__actions">
+      <button class="btn btn--ghost" id="btnImport" data-io="import" type="button">导入</button>
+      <button class="btn btn--ghost" id="btnExport" data-io="export" type="button">导出</button>
+      <button class="btn btn--primary" id="btnNew" type="button">＋ 记一笔</button>
+      <button class="btn btn--icon" id="btnTheme" type="button" aria-label="切换深浅色主题" title="切换主题">
+        <span id="themeIcon" aria-hidden="true">☾</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ═══════════ 首屏 ═══════════ -->
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero__copy">
+        <p class="eyebrow">
+          <span class="dot" aria-hidden="true"></span>
+          Personal podcast archive
+        </p>
+        <h1 id="heroTitle">听过的，<br>都<em>留下来</em>了。</h1>
+        <p class="hero__lead">
+          每听完一期，记一笔：主播在节目简介里写了什么、你真正带走了什么。
+          时间久了，这份档案会自己开口，告诉你偏爱哪几个频道、常被什么话题击中。
+        </p>
+        <div class="hero__meta">
+          <span id="heroRange">— 至 —</span>
+          <span class="hero__meta-sep" aria-hidden="true">/</span>
+          <span id="heroPace">—</span>
+        </div>
+      </div>
+
+      <div class="hero__panel">
+        <div class="stats" id="stats"><!-- JS 填充 --></div>
+        <div class="wave" id="wave" aria-hidden="true"><!-- JS 填充 --></div>
+        <p class="hero__hint" id="dataHint" hidden>
+          当前是示例数据，先随便看看。<button class="linkbtn" id="btnStarter" type="button">换成我的记录 →</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══════════ 频道偏好 ═══════════ -->
+    <section class="section" id="channels" aria-labelledby="chTitle">
+      <div class="section__head">
+        <div>
+          <p class="section__kicker">01 — 偏好频道</p>
+          <h2 id="chTitle">你把时间交给了谁</h2>
+        </div>
+        <p class="section__note">
+          偏好指数 = 集数 40% ＋ 平均评分 35% ＋ 投入时长 25%，按频道汇总后归一化到 100。
+        </p>
+      </div>
+      <p class="lede" id="channelSummary">—</p>
+      <div class="channel-grid" id="channelGrid"><!-- JS 填充 --></div>
+    </section>
+
+    <!-- ═══════════ 主题 & 节奏 ═══════════ -->
+    <section class="section" id="topics" aria-labelledby="tpTitle">
+      <div class="section__head">
+        <div>
+          <p class="section__kicker">02 — 主题与节奏</p>
+          <h2 id="tpTitle">你反复回到的话题</h2>
+        </div>
+        <p class="section__note">标签来自你每期手记，字号与热度成正比。</p>
+      </div>
+      <div class="topic-layout">
+        <div class="panel">
+          <div class="panel__head">
+            <h3>常听主题</h3>
+            <span class="panel__meta" id="tagMeta">—</span>
+          </div>
+          <div class="tagcloud" id="tagCloud"><!-- JS 填充 --></div>
+        </div>
+        <div class="panel">
+          <div class="panel__head">
+            <h3>近 6 个月收听节奏</h3>
+            <span class="panel__meta" id="chartMeta">—</span>
+          </div>
+          <div class="chart" id="chart"><!-- JS 填充 --></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 收听记录 ═══════════ -->
+    <section class="section" id="log" aria-labelledby="logTitle">
+      <div class="section__head">
+        <div>
+          <p class="section__kicker">03 — 收听记录</p>
+          <h2 id="logTitle">每一期，都有一张卡片</h2>
+        </div>
+        <p class="section__note" id="logCount">—</p>
+      </div>
+
+      <div class="toolbar">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.3 4.3-1.4 1.4-4.3-4.3A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" fill="currentColor"/></svg>
+          <input id="q" type="search" placeholder="搜索节目、主播、主题或笔记…" autocomplete="off" aria-label="搜索收听记录">
+          <kbd>/</kbd>
+        </label>
+
+        <div class="chips" id="channelFilter" role="group" aria-label="按频道筛选"></div>
+
+        <label class="select">
+          <span>排序</span>
+          <select id="sort" aria-label="排序方式">
+            <option value="recent">最近收听</option>
+            <option value="rating">评分最高</option>
+            <option value="duration">时长最长</option>
+            <option value="show">按节目分组</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="card-grid" id="logGrid"><!-- JS 填充 --></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p class="foot__note">
+      数据存在本机浏览器的 localStorage 里，不会上传。换设备或清理缓存前，记得先导出备份（见下）。
+    </p>
+    <div class="foot__meta">
+      <span>播客收听档案 · 静态站点 · 无第三方依赖</span>
+      <span class="foot__sep" aria-hidden="true">/</span>
+      <button class="linkbtn" data-io="import" type="button">导入 JSON</button>
+      <span class="foot__sep" aria-hidden="true">/</span>
+      <button class="linkbtn" data-io="export" type="button">导出备份</button>
+      <span class="foot__sep" aria-hidden="true">/</span>
+      <button class="linkbtn" id="btnSample" type="button">载入示例数据</button>
+      <span class="foot__sep" aria-hidden="true">/</span>
+      <button class="linkbtn linkbtn--danger" id="btnClear" type="button">清空全部</button>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════ 新增 / 编辑弹窗 ═══════════ -->
+<dialog id="dialog" class="dialog" aria-labelledby="dialogTitle">
+  <form id="form" class="form" novalidate>
+    <header class="dialog__head">
+      <div>
+        <p class="section__kicker" id="dialogKicker">新增记录</p>
+        <h2 id="dialogTitle">记下这一期</h2>
+      </div>
+      <button class="btn btn--icon" id="btnClose" type="button" aria-label="关闭">✕</button>
+    </header>
+
+    <div class="form__body">
+      <div class="field">
+        <label for="fShow">节目名称 <span class="req">*</span></label>
+        <input id="fShow" name="show" type="text" list="showList" placeholder="例如：忽左忽右" required>
+        <datalist id="showList"></datalist>
+      </div>
+      <div class="field">
+        <label for="fHost">主播 / 频道主理人</label>
+        <input id="fHost" name="host" type="text" placeholder="例如：程衍樑">
+      </div>
+
+      <div class="field field--wide">
+        <label for="fEpisode">剧集标题 <span class="req">*</span></label>
+        <input id="fEpisode" name="episode" type="text" placeholder="这一期的名字" required>
+      </div>
+
+      <div class="field">
+        <label for="fDate">收听日期 <span class="req">*</span></label>
+        <input id="fDate" name="date" type="date" required>
+      </div>
+      <div class="field">
+        <label for="fDuration">时长（分钟）</label>
+        <input id="fDuration" name="duration" type="number" min="1" max="600" step="1" placeholder="60">
+      </div>
+
+      <div class="field field--wide">
+        <label for="fRating">我的评分</label>
+        <div class="rating-row">
+          <input id="fRating" name="rating" type="range" min="0.5" max="5" step="0.5" value="4">
+          <output id="ratingOut" for="fRating">4.0</output>
+        </div>
+      </div>
+
+      <div class="field field--wide">
+        <label for="fTags">主题标签</label>
+        <input id="fTags" name="tags" type="text" placeholder="历史, 全球化, 经济史">
+        <p class="hint">用逗号或空格分隔，标签会汇总进「常听主题」。</p>
+      </div>
+
+      <div class="field field--wide">
+        <label for="fUrl">收听链接</label>
+        <input id="fUrl" name="url" type="url" placeholder="https://…（小宇宙 / Apple Podcasts / 官网）">
+      </div>
+
+      <div class="field field--wide">
+        <label for="fHostNotes">主播笔记 <span class="hint hint--inline">主播在节目简介 / shownotes 里写了什么</span></label>
+        <textarea id="fHostNotes" name="hostNotes" rows="4" placeholder="用两三句话复述主播自己的叙述，而不是你的评价。"></textarea>
+      </div>
+
+      <div class="field field--wide">
+        <label for="fTakeaways">我的收获 <span class="hint hint--inline">每行一条</span></label>
+        <textarea id="fTakeaways" name="takeaways" rows="4" placeholder="听完之后，你真正带走的三件事。"></textarea>
+      </div>
+
+      <div class="field field--wide">
+        <label for="fQuote">金句</label>
+        <input id="fQuote" name="quote" type="text" placeholder="一句让你停下来的话">
+      </div>
+    </div>
+
+    <footer class="dialog__foot">
+      <button class="btn btn--danger-ghost" id="btnDeleteEntry" type="button" hidden>删除这期</button>
+      <span class="dialog__spacer"></span>
+      <button class="btn btn--ghost" id="btnCancel" type="button">取消</button>
+      <button class="btn btn--primary" type="submit">保存</button>
+    </footer>
+  </form>
+</dialog>
+
+<input id="fileInput" type="file" accept="application/json,.json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
